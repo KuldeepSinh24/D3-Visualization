@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>D3 Page Template</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="http://d3js.org/topojson.v0.min.js"></script>
+    <style type="text/css">
+        .mycircle {
+            fill: blue;
+            stroke: red;
+            stroke-width: 5;
+        }
+
+        svg .myrect {
+            fill: blue;
+            stroke-width: 0px;
+        }
+
+        svg .projection {
+            fill: green;
+        }
+
+        .states :hover {
+            fill: red;
+        }
+
+        .state-borders {
+            fill: none;
+            stroke: #fff;
+            stroke-width: 0.5px;
+            stroke-linejoin: round;
+            stroke-linecap: round;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="text/javascript">
+        // Your beautiful D3 code will go here
+        d3.select("body").append("h1").text(" D3 Js US Map!");
+
+        var dataset;
+        var csvdata;
+        var margin = { top: 10, right: 10, bottom: 30, left: 100 };
+        var svgWidth = 960 - margin.left - margin.right;
+        var svgHeight = 700 - margin.top - margin.bottom;
+
+        d3.csv("losses2015_transformed.csv")
+            .then(function (data) {
+                //csvdata = data
+                csvdata = d3.nest()
+                    .key(function (d) { return d.State_Code; })
+                    .rollup(function (d) {
+                        return d3.sum(d, function (g) { return g.Amount; });
+                    })
+                    .entries(data);
+                // datum = { key : Year, value : sum(Losses) }
+
+                //                console.log(csvdata);          
+                d3.json("us-states.json")
+                    .then(function (data) {
+                        //                console.log(data);
+                        dataset = data;
+                        console.log(csvdata);
+                        console.log(csvdata.length);
+                        for (var i = 0; i < csvdata.length; i++) {
+
+                            // Grab State Name
+                            var dataState = csvdata[i].key;
+
+                            // Grab data value 
+                            var dataValue = csvdata[i].value;
+
+                            // Find the corresponding state inside the GeoJSON
+                            for (var j = 0; j < data.features.length; j++) {
+                                var jsonState = data.features[j].id;
+
+
+                                if (dataState == jsonState) {
+                                    // console.log(dataState);
+
+                                    // console.log(dataValue);
+                                    data.features[j].properties.Amount = dataValue;
+                                    console.log(data);
+                                }
+                            }
+                        }
+                        createUSMap();
+                    })
+            })
+        function createUSMap() {
+            var data = dataset;
+            //            console.log(data.features);
+
+            var svg = d3.select("body")
+                .append("svg")
+                .attr("width", svgWidth)
+                .attr("height", svgHeight);
+
+            var steps = 5;
+            var maxAmount = d3.max(data, function (d) { return d.Amount; });
+            var color_threshold = d3.scaleThreshold()
+                .domain(d3.range(0 + maxAmount / steps, maxAmount, maxAmount / steps)) //[20, 40, 60, 80]
+                .range(d3.schemeGreens[steps]);
+
+            var path = d3.geoPath()
+                .projection(d3.geoAlbersUsa());
+
+            svg.append("g")
+                .attr("class", "states")
+                .selectAll("path")
+                .data(dataset.features)
+                .enter()
+                .append("path")
+                .attr("d", path)
+                .style("stroke", "#fff")
+                .style("stroke-width", "1")
+                .style("fill", function (d) {
+
+                    // Get data value
+                    var value = d.properties.Amount;
+                    console.log(color_threshold(value));
+                    //console.log(csvdata.Amount);
+                    if (value) {
+                        //If value exists…
+
+                        return color_threshold(csvdata.Amount);
+                    } else {
+                        //If value is undefined…
+                        //return color_threshold(900);
+
+                        return "rgb(213,222,217)";
+                    }
+                });
+
+        };
+
+    </script>
+
+</body>
+
+</html>

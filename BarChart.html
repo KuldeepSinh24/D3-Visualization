@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>D3 Page Template</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <style type="text/css">
+        .mycircle {
+            fill: blue;
+            stroke: red;
+            stroke-width: 5;
+        }
+
+        svg .myrect {
+            fill: blue;
+            stroke-width: 0px;
+        }
+
+        svg .projection {
+            fill: green;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="text/javascript">
+        // Your beautiful D3 code will go here
+        d3.select("body").append("h1").text("Welcome To D3 Js Tutorials!");
+        d3.select("body").append("h2").text("SVG Examples");
+        // var dataset = [ 10, 20, 30, 40, 50];
+        // d3.select("body")
+        // .selectAll("p")
+        // .data(dataset)
+        // .enter()
+        // .append("p")
+        // .text(function(d){return "I can count up to "+ d;})
+        // .style("color",function(d){
+        //     if (d > 30){
+        //         return "red";
+        //     }else{
+        //         return "blue";
+        //     }
+        // });
+        d3.csv("losses2015_transformed.csv")
+            .then(function (data) {
+                dataset = data
+                createBarChart();
+            })
+        function createBarChart() {
+            var data = dataset;
+            console.log(data);
+            var h = 13000;
+            var w = 1000;
+            var svg = d3.select("body")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", h);
+
+            var xScale = d3.scaleSqrt()
+                .domain([0, d3.max(data, function (d) { return d.Amount; })])
+                .range([0, w]);
+
+            svg.selectAll("rect")
+                .data(data)
+                .enter()
+                .append("rect")
+                .attr("x", 220)
+                .attr("y", function (d, i) {
+                    return (i + 1) * (20 + 2);
+                })
+                .attr("height", 20)
+                .attr("width", function (d, i) {
+                    return xScale(d.Amount / 10000);
+                })
+                .attr("class", "myrect");
+
+            svg.selectAll("text.Damage_Description")
+                .data(data)
+                .enter()
+                .append("text")
+                .text(function (d, i) {
+                    return d.Damage_Descp;
+                })
+                .attr("x", 10)
+                .attr("y", function (d, i) {
+                    return (i + 1) * (20 + 2) + 15;
+                });
+
+        }
+
+
+    </script>
+
+</body>
+
+</html>
